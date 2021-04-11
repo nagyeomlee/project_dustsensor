@@ -1,3 +1,6 @@
+#include <LiquidCrystal_I2C.h>
+LiquidCrystal_I2C lcd(0x3F, 16, 2);
+
 int Vo = A0;
 int V_LED = 2;
 
@@ -10,6 +13,7 @@ void setup()
   Serial.begin(9600);
   pinMode(V_LED, OUTPUT);
   pinMode(Vo, INPUT);
+  lcd.begin();
 }
 
 void loop()
@@ -32,5 +36,12 @@ void loop()
   Serial.print(" Dust Density : ");
   Serial.println(dustDensity);
 
+  lcd.setCursor(0, 0);
+  lcd.print("MISEMISE Project");
+  lcd.setCursor(0, 1);
+  lcd.print("dust : ");
+  lcd.setCursor(7, 1);
+  lcd.print(dustDensity);
+  
   delay(1000);
 }
