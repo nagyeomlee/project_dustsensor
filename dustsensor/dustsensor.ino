@@ -1,7 +1,13 @@
+#include <Stepper.h>
 #include <SoftwareSerial.h>
 #include <LiquidCrystal_I2C.h>
 SoftwareSerial BTSerial(3,4);
 LiquidCrystal_I2C lcd(0x3F, 16, 2);
+
+// 스텝모터에서 스텝을 조절, 100 = 180도, 200 = 360도
+const int stepsPerRevolution = 100;
+
+Stepper myStepper(stepsPerRevolution, 8, 9, 10, 11);
 
 #define BLUE 5
 #define GREEN 6
@@ -15,6 +21,7 @@ float Voltage = 0;
 float dustDensity = 0;
 
 int cnt;
+int window;
 
 int redValue = 0;
 int greenValue = 0;
@@ -25,11 +32,14 @@ char data = 'a';
 
 void setup()
 {
+  myStepper.setSpeed(60);
   Serial.begin(115200);
   BTSerial.begin(115200);
   pinMode(V_LED, OUTPUT);
   pinMode(Vo, INPUT);
   lcd.begin();
+  lcd.setCursor(0, 0);
+  lcd.print("MISEMISE Project");
 
   pinMode(RED, OUTPUT);
   pinMode(GREEN, OUTPUT);
@@ -37,7 +47,6 @@ void setup()
   digitalWrite(RED, LOW);
   digitalWrite(GREEN, LOW);
   digitalWrite(BLUE, HIGH);
-
 }
 
 void loop()
@@ -53,7 +62,7 @@ void loop()
   delayMicroseconds(9680);
   
   Voltage = Vo_value * 5.0 / 1024.0;
-  dustDensity = (Voltage - 0.6)/0.005;
+  dustDensity = (Voltage - 0.6)/0.005,1;
   String dustString = String (dustDensity);
 
   if ( dustDensity < 0 )
@@ -69,8 +78,6 @@ void loop()
 
   BTSerial.println(dustString);
 
-  lcd.setCursor(0, 0);
-  lcd.print("MISEMISE Project");
   lcd.setCursor(0, 1);
   lcd.print("dust : ");
   lcd.setCursor(7, 1);
@@ -148,5 +155,26 @@ void Mode (char temp)
           analogWrite(BLUE, blueValue);
           cnt++;
           }
+
+          Serial.print("현재 cnt 값 : ");
+          Serial.println(cnt);
+
+          if (dustDensity >= 30)
+          {
+            Serial.println("open window.");
+            myStepper.step(stepsPerRevolution);
+            window = 1;
+            delay(5000);
+          }
+
+          if (dustDensity < 30 && window == 1)
+          {
+            Serial.println("close window.");
+            myStepper.step(-stepsPerRevolution);
+            window = 0;
+            delay(5000);
+          }
+          
     }
 }
+​
